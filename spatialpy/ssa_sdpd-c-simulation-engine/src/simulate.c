@@ -37,13 +37,13 @@ void take_step1(particle_t* me, system_t* system, unsigned int step) {
     int i;
     //printf("particle id=%i Q[0]=%e\n",me->id,me->Q[0]);
 
-    // Step 1.1: 
+    // Step 1.1:
     if(step==0 || system->static_domain == 0){
         find_neighbors(me, system);
     }
 
     // Step 1.2: Predictor step
-    
+
     // Update half-state
     if (me->solidTag == 0 && system->static_domain == 0) {
        for (i = 0; i < 3; i++) {
@@ -54,7 +54,7 @@ void take_step1(particle_t* me, system_t* system, unsigned int step) {
             // Update position using previous velocity
             me->x[i] = me->x[i] + system->dt * me->vt[i];
         }
-        // Update density using continuity equation 
+        // Update density using continuity equation
         me->rho = me->rho + 0.5 * system->dt * me->Frho;
     }
     // update half-state of chem rxn
@@ -117,7 +117,7 @@ void take_step2(particle_t* me, system_t* system, unsigned int step)
             me->v[i] = me->v[i] + 0.5 * system->dt * me->F[i];
         }
 
-        // Update density using continuity equation and Shepard filter 
+        // Update density using continuity equation and Shepard filter
         if (step % 20 == 0) {
             filterDensity(me, system);
         }
@@ -133,7 +133,7 @@ void take_step2(particle_t* me, system_t* system, unsigned int step)
 
 
     // Step 3.2: Compute boundary volume fractions (bvf)
-    // Step 3.3: Apply BVF 
+    // Step 3.3: Apply BVF
     if (me->solidTag == 0 && system->static_domain == 0) {
         computeBoundaryVolumeFraction(me,system);
         applyBoundaryVolumeFraction(me, system);

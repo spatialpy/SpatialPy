@@ -5,6 +5,7 @@ Copyright 2018 Brian Drawert (UNCA)
 This program is distributed under the terms of the GNU General Public License.
 See the file LICENSE.txt for details.
 ***************************************************************************** */
+#include "debug.h"
 #include "linked_list.h"
 #include "particle.h"
 #include <stdlib.h>
@@ -73,13 +74,11 @@ void find_neighbors(particle_t* me, system_t* system){
         if( (n->data->x[1] > (me->x[1] + system->h)) || (n->data->x[1] < (me->x[1] - system->h) ) ) continue;
         if( (n->data->x[2] > (me->x[2] + system->h)) || (n->data->x[2] < (me->x[2] - system->h) ) ) continue;
         add_to_neighbor_list(me, n->data, system);
-        if(debug_flag>2){ 
-            printf("find_neighbors(%i) forward found %i dist: %e    dx: %e   dy: %e   dz: %e\n",
+        SSA_LOG(2, "find_neighbors(%i) forward found %i dist: %e    dx: %e   dy: %e   dz: %e\n",
             me->id,n->data->id, particle_dist(me,n->data),
             me->x[0] - n->data->x[0],
             me->x[1] - n->data->x[1],
             me->x[2] - n->data->x[2]);
-        }
     }
     // check for wrap around points x
     /*if(n==NULL && system->boundary_conditions[0] == 'p'){
@@ -89,7 +88,7 @@ void find_neighbors(particle_t* me, system_t* system){
             if( (n->data->x[1] > (me->x[1] + system->h)) || (n->data->x[1] < (me->x[1] - system->h) ) ) continue;
             if( (n->data->x[2] > (me->x[2] + system->h)) || (n->data->x[2] < (me->x[2] - system->h) ) ) continue;
             add_to_neighbor_list(me, n->data, system);
-            if(debug_flag){ 
+            if(debug_flag){
                 printf("find_neighbors(%i) forward wrap around found %i dist: %e    dx: %e   dy: %e   dz: %e\n",
                 me->id,n->data->id, particle_dist(me,n->data),
                 me->x[0] - n->data->x[0],
@@ -126,7 +125,7 @@ void find_neighbors(particle_t* me, system_t* system){
     //search for points backward
     for(n = me->x_index->prev; n!=NULL; n=n->prev){
         //if(n->data->x[0] > (me->x[0] + system->h)) break; //stop searching forward
-        /*if(me->id == 0){ 
+        /*if(me->id == 0){
             printf("find_neighbors(%i) backwards looking at  %i dist: %e    dx: %e   dy: %e   dz: %e\n",
             me->id,n->data->id, particle_dist(me,n->data),
             me->x[0] - n->data->x[0],
@@ -141,18 +140,16 @@ void find_neighbors(particle_t* me, system_t* system){
             //if(me->id==0){ printf("\tnode y is outside\n");}
             continue;
         }
-        if( (n->data->x[2] > (me->x[2] + system->h)) || (n->data->x[2] < (me->x[2] - system->h) ) ){ 
+        if( (n->data->x[2] > (me->x[2] + system->h)) || (n->data->x[2] < (me->x[2] - system->h) ) ){
             //if(me->id==0){ printf("\tnode z is outside\n");}
             continue;
         }
         add_to_neighbor_list(me, n->data, system);
-        if(debug_flag>2){ 
-            printf("find_neighbors(%i) backwards found %i dist: %e    dx: %e   dy: %e   dz: %e\n",
+        SSA_LOG(2, "find_neighbors(%i) backwards found %i dist: %e    dx: %e   dy: %e   dz: %e\n",
             me->id,n->data->id, particle_dist(me,n->data),
             me->x[0] - n->data->x[0],
             me->x[1] - n->data->x[1],
             me->x[2] - n->data->x[2]);
-        }
     }
     /*if(n==NULL && system->boundary_conditions[0] == 'p'){
         double min_x = system->xhi - (system->h - (system->xlo - me->x[0]));
@@ -161,7 +158,7 @@ void find_neighbors(particle_t* me, system_t* system){
             if( (n->data->x[1] > (me->x[1] + system->h)) || (n->data->x[1] < (me->x[1] - system->h) ) ) continue;
             if( (n->data->x[2] > (me->x[2] + system->h)) || (n->data->x[2] < (me->x[2] - system->h) ) ) continue;
             add_to_neighbor_list(me, n->data, system);
-            if(debug_flag){ 
+            if(debug_flag){
                 printf("find_neighbors(%i) backwards wrap around found %i dist: %e    dx: %e   dy: %e   dz: %e\n",
                 me->id,n->data->id, particle_dist(me,n->data),
                 me->x[0] - n->data->x[0],
@@ -243,7 +240,3 @@ double particle_dist_sqrd(particle_t* p1, particle_t*p2){
 //    me->rest_distance = rest_distance;
 //    return me;
 //}
-
-
-
-

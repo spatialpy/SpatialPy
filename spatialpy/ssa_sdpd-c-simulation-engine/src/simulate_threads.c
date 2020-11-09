@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "linked_list.h"
 #include "model.h"
 #include "output.h"
@@ -36,13 +37,13 @@ void* output_system_thread(void* targ){
     while(1){
         pthread_barrier_wait(&begin_output_barrier);
         //output_csv(system, current_step);
-        if(debug_flag) printf("[OUT] start output_vtk__sync_step()\n");
+        SSA_LOG(1, "[OUT] start output_vtk__sync_step()\n");
         output_vtk__sync_step(system, current_step);
-        if(debug_flag) printf("[OUT] done output_vtk__sync_step()\n");
+        SSA_LOG(1, "[OUT] done output_vtk__sync_step()\n");
         pthread_barrier_wait(&end_output_barrier);
-        if(debug_flag) printf("[OUT] start output_vtk__async_step()\n");
+        SSA_LOG(1, "[OUT] start output_vtk__async_step()\n");
         output_vtk__async_step(system);
-        if(debug_flag) printf("[OUT] done output_vtk__async_step()\n");
+        SSA_LOG(1, "[OUT] done output_vtk__async_step()\n");
     }
 }
 
@@ -55,9 +56,9 @@ void* sort_index_thread(void* targ_in){
     struct sarg* targ = (struct sarg*) targ_in;
     while(1){
         pthread_barrier_wait(&begin_sort_barrier);
-        if(debug_flag) printf("[SORT] begin sort\n");
+        SSA_LOG(1, "[SORT] begin sort\n");
         linked_list_sort(targ->ll,targ->sort_ndx);
-        if(debug_flag) printf("[SORT] sort complete\n");
+        SSA_LOG(1, "[SORT] sort complete\n");
         pthread_barrier_wait(&end_sort_barrier);
     }
 }
@@ -72,7 +73,7 @@ void* run_simulation_thread(void *targ_in){
     // each thread will take a step with each of it's particles
     for(step=0; step < system->nt; step++){
         // block on the begin barrier
-        if(debug_flag) printf("[WORKER %i] waiting to begin step %i\n",targ->thread_id,step);
+        SSA_LOG(1, "[WORKER %i] waiting to begin step %i\n",targ->thread_id,step);
         pthread_barrier_wait(&begin_step_barrier);
         //---------------------------------------
         unsigned int nsubsteps = get_number_of_substeps();
@@ -87,7 +88,7 @@ void* run_simulation_thread(void *targ_in){
                 n=n->next;
             }
             // block on the end barrier
-            if(debug_flag)printf("[WORKER %i] completed step %i, substep %i/%i, processed %i particles\n",targ->thread_id,step,substep,nsubsteps,count);
+            SSA_LOG(1, "[WORKER %i] completed step %i, substep %i/%i, processed %i particles\n",targ->thread_id,step,substep,nsubsteps,count);
             pthread_barrier_wait(&end_step_barrier);
         }
         //---------------------------------------
@@ -102,7 +103,7 @@ void* run_simulation_thread(void *targ_in){
             n=n->next;
         }
         // block on the end barrier
-        if(debug_flag)printf("[WORKER %i] completed compute_bond_forces %i, processed %i particles\n",targ->thread_id,step,count);
+        SSA_LOG(1, "[WORKER %i] completed compute_bond_forces %i, processed %i particles\n",targ->thread_id,step,count);
         pthread_barrier_wait(&end_step_barrier);
         */
         //---------------------------------------
@@ -142,7 +143,7 @@ void run_simulation(int num_threads, system_t* system){
                 }
             }
         }
-        if(debug_flag) printf("Creating thread to process %i particles\n", targs[i].num_my_particles);
+        SSA_LOG(1, "Creating thread to process %i particles\n", targs[i].num_my_particles);
         pthread_create(&thread_handles[i], NULL, run_simulation_thread, &targs[i]);
     }
     // Create threads to sort indexes
@@ -153,7 +154,7 @@ void run_simulation(int num_threads, system_t* system){
     sort_args[0].ll = system->x_index;
     sort_args[0].sort_ndx = 0;
     pthread_create(&sort_thread_handles[0], NULL, sort_index_thread, &sort_args[0]);
-    if(debug_flag) printf("Creating thread to update x-position index\n");
+    SSA_LOG(1, "Creating thread to update x-position index\n");
     /*sort_args[1].ll = system->y_index;
     sort_args[1].sort_index = 1;
     pthread_create(&sort_thread_handles[1], NULL, sort_index_thread, &sort_args[1]);
@@ -166,29 +167,29 @@ void run_simulation(int num_threads, system_t* system){
     pthread_barrier_init(&begin_output_barrier, NULL, 2);
     pthread_barrier_init(&end_output_barrier, NULL, 2);
     pthread_create(&output_thread_handles[0], NULL, output_system_thread, system);
-    if(debug_flag) printf("Creating thread to create output files\n");
+    SSA_LOG(1, "Creating thread to create output files\n");
 
     // Start simulation, coordinate simulation
     int step,next_output_step = 0;
     for(step=0; step < system->nt; step++){
         // Release the Sort Index threads
-        if(debug_flag) printf("[%i] Starting the Sort Index threads\n",step);
+        SSA_LOG(1, "[%i] Starting the Sort Index threads\n",step);
         pthread_barrier_wait(&begin_sort_barrier);
         // Output state
         if(step >= next_output_step){
             // Release output thread
             current_step = step;
-            if(debug_flag) printf("[%i] Starting the Output threads\n",step);
+            SSA_LOG(1, "[%i] Starting the Output threads\n",step);
             pthread_barrier_wait(&begin_output_barrier);
             next_output_step += system->output_freq;
             // Wait until output threads are done
             pthread_barrier_wait(&end_output_barrier);
-            if(debug_flag) printf("[%i] Output threads finished\n",step);
+            SSA_LOG(1, "[%i] Output threads finished\n",step);
 
         }
         // Wait until Sort Index threads are done
         pthread_barrier_wait(&end_sort_barrier);
-        if(debug_flag) printf("[%i] Sort Index threads finished\n",step);
+        SSA_LOG(1, "[%i] Sort Index threads finished\n",step);
         if(debug_flag>2 && step==0){
             printf("x_index = [");
             node_t*n;
@@ -204,36 +205,36 @@ void run_simulation(int num_threads, system_t* system){
         }
 
         // Release the worker threads to take step
-        if(debug_flag) printf("[%i] Starting the Worker threads\n",step);
+        SSA_LOG(1, "[%i] Starting the Worker threads\n",step);
         pthread_barrier_wait(&begin_step_barrier);
         unsigned int nsubsteps = get_number_of_substeps();
         for(int substep=0;substep < nsubsteps; substep++){
             // Wait until worker threads are done
             pthread_barrier_wait(&end_step_barrier);
-            if(debug_flag) printf("[%i] Worker threads finished substep %i/%i\n",step,substep,nsubsteps);
+            SSA_LOG(1, "[%i] Worker threads finished substep %i/%i\n",step,substep,nsubsteps);
         }
-        // Solve RDME 
-        if(debug_flag) printf("[%i] starting RDME simulation\n",step);
+        // Solve RDME
+        SSA_LOG(1, "[%i] starting RDME simulation\n",step);
         simulate_rdme(system, step);
-        if(debug_flag) printf("[%i] Finish RDME simulation\n",step);
+        SSA_LOG(1, "[%i] Finish RDME simulation\n",step);
     }
     // Record final timepoint
     current_step = step;
-    if(debug_flag) printf("[%i] Starting the Output threads\n",step);
+    SSA_LOG(1, "[%i] Starting the Output threads\n",step);
     pthread_barrier_wait(&begin_output_barrier);
     pthread_barrier_wait(&end_output_barrier);
-    if(debug_flag) printf("[%i] Output threads finished\n",step);
-    if(debug_flag) printf("[%i] Waiting for Async Output threads\n",step);
-    pthread_barrier_wait(&begin_output_barrier); // wait for the async 
-    if(debug_flag) printf("[%i] Async Output threads finished\n",step);
+    SSA_LOG(1, "[%i] Output threads finished\n",step);
+    SSA_LOG(1, "[%i] Waiting for Async Output threads\n",step);
+    pthread_barrier_wait(&begin_output_barrier); // wait for the async
+    SSA_LOG(1, "[%i] Async Output threads finished\n",step);
 
     //clean up
-    if(debug_flag) printf("Cleaning up RDME\n");
+    SSA_LOG(1, "Cleaning up RDME\n");
     destroy_rdme(system);
 
     // Kill threads and wait for them to finish
     /*
-    if(debug_flag) printf("Cleaning up threads\n");
+    SSA_LOG(1, "Cleaning up threads\n");
     for(i=0;i<3;i++){
         pthread_kill(sort_thread_handles[i], SIGINT);
         pthread_join(sort_thread_handles[i], NULL);
@@ -246,7 +247,7 @@ void run_simulation(int num_threads, system_t* system){
     }
     */
     // done
-    if(debug_flag) printf("Simulation complete\n");;
+    SSA_LOG(1, "Simulation complete\n");;
     return;
 }
 

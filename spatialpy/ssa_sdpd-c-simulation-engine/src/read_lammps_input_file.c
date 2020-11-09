@@ -15,7 +15,7 @@ void read_lammps_input_file(const char*filename, system_t*system){
     char* s;
     FILE* fp = fopen(filename, "r");
     if(fp == NULL){
-        perror("Error opening input file");   
+        perror("Error opening input file");
         exit(EXIT_FAILURE);
     }
     char buffer[1024];

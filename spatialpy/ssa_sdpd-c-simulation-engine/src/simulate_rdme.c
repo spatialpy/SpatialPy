@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "linked_list.h"
 #include <time.h>
 #include "output.h"
@@ -20,7 +21,7 @@
 /**************************************************************************/
 void initialize_rdme(system_t*system, size_t *irN, size_t *jcN,int *prN,size_t *irG,size_t *jcG,
                         unsigned int*u0){
-    if(debug_flag){printf("*************** initialize_rdme ******************\n");fflush(stdout);}
+    SSA_LOG(1,"*************** initialize_rdme ******************\n");
     //printf("nsm_core__create() BEGIN\n");fflush(stdout);
     nsm_core__create(system,irN,jcN,prN,irG,jcG);
     //printf("nsm_core__create() END\n");fflush(stdout);
@@ -55,14 +56,14 @@ void simulate_rdme(system_t*system,unsigned int step){
 //            if(debug_flag) printf("\tnsm_core__build_diffusion_matrix\n");
 //            nsm_core__build_diffusion_matrix(rdme,system);
 //        }
-        if(debug_flag) printf("\tnsm_core__initialize_rxn_propensities\n");
+        SSA_LOG(1,"\tnsm_core__initialize_rxn_propensities\n");
         nsm_core__initialize_rxn_propensities(system);
-        if(debug_flag) printf("\tnsm_core__initialize_diff_propensities\n");
+        SSA_LOG(1,"\tnsm_core__initialize_diff_propensities\n");
         nsm_core__initialize_diff_propensities(system);
-        if(debug_flag) printf("\tnsm_core__initialize_heap\n");
+        SSA_LOG(1,"\tnsm_core__initialize_heap\n");
         nsm_core__initialize_heap(system);
     }
-    if(debug_flag) printf("Simulating RDME for %e seconds\n",system->dt);
+    SSA_LOG(1,"Simulating RDME for %e seconds\n",system->dt);
     nsm_core__take_step(system, system->dt*step, system->dt);
 }
 /**************************************************************************/
@@ -70,8 +71,8 @@ void destroy_rdme(system_t*system){
     if(system->rdme == NULL){
         return;
     }
-    if(debug_flag) printf("NSM: total # reacton events %lu\n",system->rdme->total_reactions);
-    if(debug_flag) printf("NSM: total # diffusion events %lu\n",system->rdme->total_diffusion);
+    SSA_LOG(1,"NSM: total # reacton events %lu\n",system->rdme->total_reactions);
+    SSA_LOG(1,"NSM: total # diffusion events %lu\n",system->rdme->total_diffusion);
     nsm_core__destroy(system->rdme);
 }
 
@@ -95,7 +96,7 @@ void print_current_state(particle_t*subvol, system_t*system){
         p2 = nn->data;
         printf("%i: nn->D_i_j=%e \n",p2->id,nn->D_i_j);
     }
-    
+
 }
 
 /*void nsm_core(const size_t *irD,const size_t *jcD,const double *prD,
@@ -591,8 +592,8 @@ void nsm_core__take_step(system_t*system, double current_time, double step_size)
                     exit(1);
                 }
             }
-            if(debug_flag){printf("nsm: tt=%e subvol=%i type=%i ",tt,subvol->id,subvol->type);}
-            if(debug_flag){printf("Rxn %i \n",re);}
+            SSA_LOG(2, "nsm: tt=%e subvol=%i type=%i ",tt,subvol->id,subvol->type);
+            SSA_LOG(2, "Rxn %i \n",re);
             /* b) Update the state of the subvolume subvol and sdrate[subvol]. */
             for (i = rdme->jcN[re]; i < rdme->jcN[re+1]; i++) {
                 int prev_val = subvol->xx[rdme->irN[i]];
@@ -741,8 +742,8 @@ void nsm_core__take_step(system_t*system, double current_time, double step_size)
             dest_subvol->xx[spec]++;
 
 
-            if(debug_flag){printf("nsm: tt=%e subvol=%i type=%i ",tt,subvol->id,subvol->type);}
-            if(debug_flag){printf("Diff %i->%i\n",subvol->id,dest_subvol->id);}
+            SSA_LOG(2, "nsm: tt=%e subvol=%i type=%i ",tt,subvol->id,subvol->type);
+            SSA_LOG(2, "Diff %i->%i\n",subvol->id,dest_subvol->id);
 
             /* Save reaction and diffusion rates. */
             old_rrate = dest_subvol->rdme->srrate;
