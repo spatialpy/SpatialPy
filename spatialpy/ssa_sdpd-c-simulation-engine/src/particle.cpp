@@ -13,6 +13,7 @@ See the file LICENSE.txt for details.
 #include <vector>
 #include <queue>
 #include <memory>
+#include <thread>
 
 // Include ANN KD Tree
 #include "ANN/ANN.h"
@@ -176,10 +177,10 @@ namespace Spatialpy{
         delete [] dists;
     }
 
-    void Particle::search_cleanup(ANNpoint queryPt, ANNidxArray nn_idx, ANNdistArray dists) {
+    void Particle::search_cleanup(ANNpoint *queryPt, ANNidxArray nn_idx, ANNdistArray dists) {
         //printf("***TOP OF SEARCH CLEANUP***\n") ;
         get_k_cleanup(nn_idx, dists);
-        annDeallocPt(queryPt);
+        annDeallocPt(*queryPt);
         //printf("***BOTTOM OF SEARCH CLEANUP***\n") ;
     }
 
@@ -198,6 +199,8 @@ namespace Spatialpy{
     }
 
     void Particle::find_neighbors(ParticleSystem *system, bool use_exact_k){
+        std::thread::id  tid = std::this_thread::get_id() ;
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
     	//clean out previous neighbors
     	//printf("find_neighbors.empty_linked_list\n");
     	//TODO: empty_neighbor_list(neighbors);
@@ -206,11 +209,14 @@ namespace Spatialpy{
 
         // ANN KD Tree k fixed radius nearest neighbor search
         ANNpoint queryPt = annAllocPt(system->dimension);
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         for(int i = 0; i < system->dimension; i++) {
             queryPt[i] = x[i];
         }
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         // Squared radius
-        ANNdist dist = system->h * system->h;
+        ANNdist dist = system->h2;
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         // Number of neighbors to search for
         int k;
         if(use_exact_k) {
@@ -218,10 +224,12 @@ namespace Spatialpy{
         }else{
             k = get_k__approx(system);
         }
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         // Holds indicies that identify the neighbor in system.kdTree_pts
         ANNidxArray nn_idx = new ANNidx[k];
         // Holds squared distances to the neighbor (r2)
         ANNdistArray dists = new ANNdist[k];
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         // Search for k nearest neighbors in the fixed squared radius dist from queryPt
         /*
         printf("Searching for Neighbors...\n") ;
@@ -233,7 +241,9 @@ namespace Spatialpy{
         printf("Neighbor search complete!\n") ;
         */
         system->kdTree->annkFRSearch(queryPt, dist, k, nn_idx, dists);
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         neighbors.clear() ;
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         for(int i = 0; i < k && nn_idx[i] != ANN_NULL_IDX; i++) {
             //printf("Adding neighbor %i to list.  Index of neighbor: %i with dist: %f\n", i, nn_idx[i], dists[i]) ;
             Particle *neighbor = &system->particles[nn_idx[i]];
@@ -248,7 +258,9 @@ namespace Spatialpy{
                 }
             }
         // Cleanup after the search
-        search_cleanup(queryPt, nn_idx, dists);
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+        search_cleanup(&queryPt, nn_idx, dists);
+        printf("find_neighbors [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         }
 
         // Brute force neighbor look-up

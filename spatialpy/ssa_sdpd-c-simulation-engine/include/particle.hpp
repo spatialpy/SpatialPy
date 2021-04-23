@@ -74,7 +74,7 @@ namespace Spatialpy{
 
         // KD TREE FUNCTIONS
         void get_k_cleanup(ANNidxArray nn_idx, ANNdistArray dists);
-        void search_cleanup(ANNpoint queryPt, ANNidxArray nn_idx, ANNdistArray dists);
+        void search_cleanup(ANNpoint *queryPt, ANNidxArray nn_idx, ANNdistArray dists);
         int get_k__approx(ParticleSystem *system);
         int get_k__exact(ANNpoint queryPt, ANNdist dist, ANNkd_tree *tree);
         void find_neighbors(ParticleSystem *system, bool use_exact_k=true);

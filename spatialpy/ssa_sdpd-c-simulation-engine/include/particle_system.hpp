@@ -50,6 +50,7 @@ namespace Spatialpy{
         unsigned int output_freq;
         double xlo, xhi, ylo, yhi, zlo, zhi;
         double h;
+        double h2;
         double c0;
         double rho0;
         double P0;

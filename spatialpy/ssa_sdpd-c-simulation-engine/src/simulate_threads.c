@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <thread>
 
 // Include ANN KD Tree
 #include "ANN/ANN.h"
@@ -53,6 +54,7 @@ namespace Spatialpy{
 
     void buildKDTree(ParticleSystem *system) {
         // cleanup KD Tree
+        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
         if(debug_flag) printf("\tstarting buildKDTree()\n");
 
         if(system->kdTree_initialized) {
@@ -67,6 +69,7 @@ namespace Spatialpy{
             //if(debug_flag) printf("\tannClose()\n");
             //annClose();
         }
+        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
         if(debug_flag){ printf("\tsystem->particles.size()\n");fflush(stdout);}
         int nPts = system->particles.size();
         if(debug_flag){ printf("\tannAllocPts()\n");fflush(stdout);}
@@ -76,9 +79,11 @@ namespace Spatialpy{
                 system->kdTree_pts[i][j] = system->particles[i].x[j];
             }
         }
+        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
         if(debug_flag){ printf("\tsystem->kdTree = new ANNkd_tree()\n");}
         system->kdTree = new ANNkd_tree(system->kdTree_pts, nPts, system->dimension);
         system->kdTree_initialized = true;
+        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
     }
 
     void* sort_index_thread(void* targ_in){
@@ -94,6 +99,8 @@ namespace Spatialpy{
     }
 
     void* run_simulation_thread(void *targ_in){
+        std::thread::id  tid = std::this_thread::get_id() ;
+        printf("simulate_thread [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         struct arg* targ = (struct arg*)targ_in;
         ParticleSystem *system = targ->system;
         unsigned int step;
@@ -101,6 +108,7 @@ namespace Spatialpy{
         unsigned int i;
         int count = 0;
         // each thread will take a step with each of it's particles
+        printf("simulate_thread [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         for(step=0; step < system->nt; step++){
             // block on the begin barrier
             if(debug_flag) printf("[WORKER %i] waiting to begin step %i\n",targ->thread_id,step);
@@ -110,11 +118,13 @@ namespace Spatialpy{
             for(unsigned int substep=0;substep < nsubsteps; substep++){
                 // take_step
                 count = 0;
+        printf("simulate_thread [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
                 for(i=0; i<targ->num_my_particles; i++){
                     p = &system->particles[i+targ->my_first_particle] ;
                     take_step(p,system,step,substep);
                     count++;
                 }
+        printf("simulate_thread [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
                 // block on the end barrier
                 if(debug_flag)printf("[WORKER %i] completed step %i, substep %i/%i, processed %i particles\n",targ->thread_id,step,substep,nsubsteps,count);
                 pthread_barrier_wait(&end_step_barrier);
@@ -136,13 +146,14 @@ namespace Spatialpy{
             */
             //---------------------------------------
         } //end for(step)
+        printf("simulate_thread [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         return NULL;
     }
 
     void run_simulation(int num_threads, ParticleSystem *system){
         //
         int i,j;
-        num_threads = 1 ;
+        //num_threads = 1 ;
         int num_particles_per_thread = system->particles.size() / num_threads;
         //int num_bonds_per_thread = system->bond_list->count / num_threads;
         // start worked threads
