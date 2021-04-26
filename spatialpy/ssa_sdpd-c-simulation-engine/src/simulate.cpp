@@ -47,13 +47,13 @@ namespace Spatialpy{
         //printf("particle id=%i Q[0]=%e\n",me.id,me.Q[0]);
 
         // Step 1.1:
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+        printf("simulate [%u] Reached line %d, particle id: %i\n", tid, __LINE__, me->id) ; fflush(stdout) ;
         if(step==0 || system->static_domain == 0){
             me->find_neighbors(system);
         }
 
         // Step 1.2: Predictor step
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+        printf("simulate [%u] Reached line %d particle id: %i\n", tid, __LINE__, me->id) ; fflush(stdout) ;
 
         // Update half-state
         if (me->solidTag == 0 && system->static_domain == 0) {

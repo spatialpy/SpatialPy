@@ -54,7 +54,7 @@ namespace Spatialpy{
 
     void buildKDTree(ParticleSystem *system) {
         // cleanup KD Tree
-        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
+        printf("simulate_threads Reached line %d\n", __LINE__) ; fflush(stdout) ;
         if(debug_flag) printf("\tstarting buildKDTree()\n");
 
         if(system->kdTree_initialized) {
@@ -69,7 +69,7 @@ namespace Spatialpy{
             //if(debug_flag) printf("\tannClose()\n");
             //annClose();
         }
-        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
+        printf("simulate_threads Reached line %d\n", __LINE__) ; fflush(stdout) ;
         if(debug_flag){ printf("\tsystem->particles.size()\n");fflush(stdout);}
         int nPts = system->particles.size();
         if(debug_flag){ printf("\tannAllocPts()\n");fflush(stdout);}
@@ -79,11 +79,11 @@ namespace Spatialpy{
                 system->kdTree_pts[i][j] = system->particles[i].x[j];
             }
         }
-        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
+        printf("simulate_threads Reached line %d\n", __LINE__) ; fflush(stdout) ;
         if(debug_flag){ printf("\tsystem->kdTree = new ANNkd_tree()\n");}
         system->kdTree = new ANNkd_tree(system->kdTree_pts, nPts, system->dimension);
         system->kdTree_initialized = true;
-        printf("Reached line %d\n", __LINE__) ; fflush(stdout) ;
+        printf("simulate_threads Reached line %d\n", __LINE__) ; fflush(stdout) ;
     }
 
     void* sort_index_thread(void* targ_in){
@@ -153,7 +153,7 @@ namespace Spatialpy{
     void run_simulation(int num_threads, ParticleSystem *system){
         //
         int i,j;
-        //num_threads = 1 ;
+        num_threads = 2 ;
         int num_particles_per_thread = system->particles.size() / num_threads;
         //int num_bonds_per_thread = system->bond_list->count / num_threads;
         // start worked threads
