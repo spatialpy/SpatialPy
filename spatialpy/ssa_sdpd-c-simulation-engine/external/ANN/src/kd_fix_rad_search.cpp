@@ -63,6 +63,9 @@ int ANNkd_tree::annkFRSearch(
 	ANNdistArray		dd,				// the approximate nearest neighbor
 	double				eps)			// the error bound
 {
+
+
+
 	ANNkdFRDim = dim;					// copy arguments to static equivs
 	ANNkdFRQ = q;
 	ANNkdFRSqRad = sqRad;
@@ -84,6 +87,7 @@ int ANNkd_tree::annkFRSearch(
 			nn_idx[i] = ANNkdFRPointMK->ith_smallest_info(i);
 	}
 
+    // THIS LINE IS THE NON-THREAD SAFE problem
 	delete ANNkdFRPointMK;				// deallocate closest point set
 	return ANNkdFRPtsInRange;			// return final point count
 }

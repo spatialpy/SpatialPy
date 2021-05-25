@@ -18,18 +18,18 @@ namespace Spatialpy{
         //particle_t*me2 = (particle_t*)me;
         //printf("take_step(me.id=%i step=%i substep=%i)\n",me2->id, step, substep);
         //fflush(stdout);
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         if(substep==0){
             me->check_particle_nan();  // check if particle is NaN
             take_step1(me, system, step);
         }else if(substep==1){
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
             compute_forces(me, system, step);
         }else if(substep==2){
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
             take_step2(me, system, step);
         }else{
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
             printf("ERROR, substep=%u\n",substep);
             exit(1);
         }
@@ -47,13 +47,13 @@ namespace Spatialpy{
         //printf("particle id=%i Q[0]=%e\n",me.id,me.Q[0]);
 
         // Step 1.1:
-        printf("simulate [%u] Reached line %d, particle id: %i\n", tid, __LINE__, me->id) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d, particle id: %i\n", tid, __LINE__, me->id) ; fflush(stdout) ;
         if(step==0 || system->static_domain == 0){
             me->find_neighbors(system);
         }
 
         // Step 1.2: Predictor step
-        printf("simulate [%u] Reached line %d particle id: %i\n", tid, __LINE__, me->id) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d particle id: %i\n", tid, __LINE__, me->id) ; fflush(stdout) ;
 
         // Update half-state
         if (me->solidTag == 0 && system->static_domain == 0) {
@@ -68,18 +68,18 @@ namespace Spatialpy{
             // Update density using continuity equation
             me->rho = me->rho + 0.5 * system->dt * me->Frho;
         }
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         // update half-state of chem rxn
         if(step > 0){
             for(i=0; i < int(system->num_chem_species); i++){
                 me->C[i] += me->Q[i] * system->dt * 0.5;
             }
         }
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
 
         // Apply boundary conditions
         applyBoundaryConditions(me, system);
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
 
 
         //  Clean forces
@@ -89,14 +89,14 @@ namespace Spatialpy{
             // Clean background pressure force
             me->Fbp[i] = 0.0;
         }
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
         // Clean mass flux term
         me->Frho = 0.0;
         // Clean chem rxn flux
         for(i=0; i < int(system->num_chem_species); i++){
             me->Q[i] = 0.0;
         }
-        printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
+ //       printf("simulate [%u] Reached line %d\n", tid, __LINE__) ; fflush(stdout) ;
 
 
     }
