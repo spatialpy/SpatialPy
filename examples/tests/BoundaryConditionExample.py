@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import math
 import matplotlib.pyplot as plt
 import numpy
@@ -57,7 +59,7 @@ class ChemicalGradient(spatialpy.Model):
         # Create mesh object
         print("xlim={0} ylim={1} nx={2} ny={3}".format(
             xLim, yLim, nxTot, nyTot))
-        self.mesh = spatialpy.Mesh.create_2D_domain(
+        self.domain = spatialpy.Domain.create_2D_domain(
             xLim, yLim, nxTot, nyTot,
             type_id=1, mass=mPP, nu=nu, fixed=False)
 
