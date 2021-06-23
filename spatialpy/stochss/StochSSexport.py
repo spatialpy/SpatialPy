@@ -194,14 +194,18 @@ def export(model, path=None, return_stochss_model=False):
     if path is None:
         path = f"{model.name}.smdl"
 
+    end_sim = model.num_timesteps * model.timestep_size
+    time_step = model.output_freq * model.timestep_size
+
     s_model = {"is_spatial": True,
                "defaultID": 1,
                "defaultMode": "",
                "annotation": "",
                "volume": 1,
                "modelSettings": {
-                    "endSim": model.tspan[-1],
-                    "timeStep": model.timestep_size
+                    "endSim": end_sim,
+                    "timeStep": time_step,
+                    "timestepSize": model.timestep_size
                 },
                 "species": [],
                 "initialConditions": [],
