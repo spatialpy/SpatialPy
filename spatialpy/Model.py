@@ -623,24 +623,21 @@ class Reaction():
         self.name = name
         self.annotation = ""
 
-        self.massaction = massaction
+        if propensity_function is None:
+            if rate is None:
+                errmsg = f"Reaction {name}: You must either set the reaction to be mass-action or specifiy a propensity function."
+                raise ReactionError(errmsg)
+            self.massaction = True
+        else:
+            if rate is not None:
+                errmsg = f"Reaction {name}: You cannot set the propensity type to mass-action and simultaneously set a propensity function."
+                raise ReactionError(errmsg)
+            # If they don't give us a propensity function and do give a rate, assume mass-action.
+            self.massaction = False
+            self.marate = None
 
         self.propensity_function = propensity_function
         self.ode_propensity_function = propensity_function
-
-        if self.propensity_function is None:
-            if rate is None:
-                errmsg = "Reaction "+self.name +": You must either set the reaction to be mass-action or specifiy a propensity function."
-                raise ReactionError(errmsg)
-            else:
-                # If they don't give us a propensity function and do give a rate, assume mass-action.
-                self.massaction = True
-        else:
-            if rate is not None:
-                errmsg = "Reaction "+self.name +": You cannot set the propensity type to mass-action and simultaneously set a propensity function."
-                raise ReactionError(errmsg)
-            else:
-                self.massaction = False
 
         self.reactants = {}
         if reactants is not None:
@@ -662,9 +659,11 @@ class Reaction():
 
         if self.massaction:
             self.type = "mass-action"
-            if rate is None:
-                raise ReactionError("Reaction "+self.name +": A mass-action propensity has to have a rate.")
-            self.marate = rate
+            rtype = type(rate).__name__
+            if rtype == 'instance':
+                self.marate = rate.name
+            else:
+                self.marate = rate
             self.create_mass_action()
         else:
             self.type = "customized"
@@ -702,8 +701,12 @@ class Reaction():
                                 "of two species.")
         # Case EmptySet -> Y
 
-        propensity_function = self.marate.name
-        self.ode_propensity_function = self.marate.name
+        if isinstance(self.marate, str):
+            propensity_function = self.marate
+            ode_propensity_function = self.marate
+        else:
+            propensity_function = self.marate.name
+            ode_propensity_function = self.marate.name
 
         # There are only three ways to get 'total_stoch==2':
         for r in self.reactants:
@@ -714,7 +717,7 @@ class Reaction():
             else:
                 # Case 3: X1, X2 -> Y;
                 propensity_function += "*" + r.name
-            self.ode_propensity_function += "*" + r.name
+            ode_propensity_function += "*" + r.name
 
         # Set the volume dependency based on order.
         order = len(self.reactants)
@@ -724,6 +727,7 @@ class Reaction():
             propensity_function += "*vol"
 
         self.propensity_function = propensity_function
+        self.ode_propensity_function = ode_propensity_function
 
     def set_type(self,type):
         if type not in {'mass-action','customized'}:
