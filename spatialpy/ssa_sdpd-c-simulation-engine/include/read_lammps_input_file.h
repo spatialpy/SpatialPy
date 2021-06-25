@@ -8,8 +8,7 @@ See the file LICENSE.txt for details.
 #ifndef read_lammps_input_file_h
 #define read_lammps_input_file_h
 
-#include "linked_list.h"
-#include "particle_system.h"
+#include "particle_system.hpp"
 
 void read_lammps_input_file(const char*filename, ParticleSystem*system);
 

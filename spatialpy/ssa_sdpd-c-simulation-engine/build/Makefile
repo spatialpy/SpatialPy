@@ -14,7 +14,8 @@ ANNOBJECTS = ANN.o brute.o kd_tree.o kd_util.o kd_split.o \
 
 all: ssa_sdpd
 
-ANN:
+
+CORE: $(OBJ)
 	make -f $(ROOTINC)/external/ANN/src/Makefile.spatialpy ROOTINC=$(ROOTINC)
 
 main.o:
@@ -26,6 +27,6 @@ main.o:
 %.o: $(ROOT)/src/%.c
 	$(CC) -c $(GPROFFLAG) $(GDB_FLAG) -o $@ "$<" $(INCDIRPARAMS) $(CFLAGS)
 
-ssa_sdpd: ANN main.o $(OBJ)
-	$(CC) $(GPROFFLAG) $(GDB_FLAG) -o ssa_sdpd $(OBJ)  main.o $(ANNOBJECTS) $(LFLAGS)
+ssa_sdpd: main.o 
+	$(CC) $(GPROFFLAG) $(GDB_FLAG) -o ssa_sdpd $(addprefix $(COREDIR)/,$(OBJ))  main.o $(addprefix $(COREDIR)/,$(ANNOBJECTS)) $(LFLAGS)
 

@@ -8,15 +8,11 @@ See the file LICENSE.txt for details.
 #ifndef particlesystem_hpp
 #define particlesystem_hpp
 
-#include <cstdlib>
 #include <vector>
-#include <queue>
-#include <memory>
 
 #include "ANN/ANN.h" // ANN KD Tree
 #include "NRMConstant_v5.hpp"
 #include "propensities.hpp"
-#include "particle.hpp"
 
 extern int debug_flag ;
 

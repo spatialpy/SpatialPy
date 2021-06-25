@@ -6,6 +6,8 @@ import sys
 import tempfile
 import threading
 import time
+import tempfile
+import getpass
 import re
 
 
@@ -55,6 +57,13 @@ class Solver:
         #print("SpatialPy_ROOTDIR = "+self.SpatialPy_ROOTDIR)
         #print("SpatialPy_ROOTPARAM = "+self.SpatialPy_ROOTPARAM)
 
+        tmpdir = tempfile.gettempdir()
+        self.core_dir = os.path.join(os.path.join(tmpdir, 'spatialpy_core'), getpass.getuser())
+
+        if not os.path.isdir(os.path.join(tmpdir, 'spatialpy_core')):
+            os.mkdir(os.path.join(tmpdir, 'spatialpy_core'))
+        if not os.path.isdir(self.core_dir):
+            os.mkdir(self.core_dir)
 
     def __del__(self):
         """ Deconstructor.  Removes the compiled solver."""
@@ -95,9 +104,14 @@ class Solver:
 
         # Build the solver
         makefile = self.SpatialPy_ROOTDIR+'/build/Makefile'
-        cmd_list = ['cd', self.build_dir, '&&', 'make', '-f', makefile,
+        cmd_list = ['cd', self.core_dir, '&&', 'make', 'CORE', '-f',  makefile,
             'ROOT="' + self.SpatialPy_ROOTPARAM+'"',
             'ROOTINC="' + self.SpatialPy_ROOTINC+'"',
+            'BUILD='+self.core_dir, '&&'
+            'cd', self.build_dir, '&&', 'make', '-I', self.core_dir, '-f', makefile,
+            'ROOT="' + self.SpatialPy_ROOTPARAM+'"',
+            'ROOTINC="' + self.SpatialPy_ROOTINC+'"',
+            'COREDIR="' + self.core_dir + '"',
             'MODEL=' + self.prop_file_name, 'BUILD='+self.build_dir]
         if profile:
           cmd_list.append('GPROFFLAG=-pg')

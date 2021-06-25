@@ -8,11 +8,6 @@ See the file LICENSE.txt for details.
 #ifndef simulate_rdme_h
 #define simulate_rdme_h
 
-#include <random>
-
-#include "particle_system.hpp"
-#include "propensities.hpp"
-
 namespace Spatialpy{
 
 void initialize_rdme(ParticleSystem *system, size_t *irN, size_t *jcN,int *prN,

@@ -9,13 +9,9 @@ See the file LICENSE.txt for details.
 #ifndef particle_hpp
 #define particle_hpp
 
-#include <cstdlib>
 #include <vector>
-#include <queue>
-#include <memory>
 
 #include "ANN/ANN.h" // ANN KD Tree
-#include "propensities.hpp"
 
 extern int debug_flag;
 
