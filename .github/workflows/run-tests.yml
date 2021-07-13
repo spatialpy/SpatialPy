@@ -1,0 +1,28 @@
+name: Run SpatialPy Tests
+
+on: [push]
+
+jobs:
+  run-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+
+    steps:
+    - name: Initialize environment
+      uses: actions/checkout@v2
+
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+
+    - name: Install Python dependencies
+      run: | 
+        python3 -m pip install --upgrade pip
+        python3 -m pip install -r requirements.txt
+        python3 -m pip install coverage
+        
+    - name: Run tests
+      run: coverage run test/run_tests.py

@@ -8,10 +8,12 @@ import spatialpy
 
 class diffusion_debug(spatialpy.Model):
 
-    def __init__(self, model_name="diffusion_debug_test", diffusion_constant=0.01):
+    def __init__(self, model_name="diffusion_debug_test"):
         spatialpy.Model.__init__(self, model_name)
 
-        A = spatialpy.Species(name="A", diffusion_constant=diffusion_constant)
+        D_const = 0.01
+
+        A = spatialpy.Species(name="A", diffusion_constant=D_const)
         self.add_species([A])
 
         self.domain = spatialpy.Domain.create_2D_domain(
@@ -19,12 +21,12 @@ class diffusion_debug(spatialpy.Model):
             mass=1.0, nu=1.0, fixed=True,  rho0=1.0, c0=1.0, P0=1.0
         )
 
-        self.add_initial_condition(
-            spatialpy.PlaceInitialCondition(A, 1000, [0, 0, 0]))
+        self.add_initial_condition(spatialpy.PlaceInitialCondition(A, 100000, [0,0,0]))
 
-        self.timestep_size = 0.1
-        self.num_timesteps = 10
-        self.output_freq = 1
+        self.timestep_size=.1
+        self.num_timesteps=10
+        self.output_freq=1
+
 
 # class testPeriodicDiffusion(spatialpy.Model):
 #     def __init__(self, model_name="test1D"):
