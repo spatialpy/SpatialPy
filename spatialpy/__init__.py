@@ -8,7 +8,7 @@ if (sys.version_info < (3,0)):
 from spatialpy.Model import *
 from spatialpy.Solver import *
 from spatialpy.Geometry import *
-from spatialpy.Mesh import *
+from spatialpy.Domain import *
 from spatialpy.DataFunction import DataFunction
 from spatialpy.InitialCondition import *
 from spatialpy.BoundaryCondition import BoundaryCondition

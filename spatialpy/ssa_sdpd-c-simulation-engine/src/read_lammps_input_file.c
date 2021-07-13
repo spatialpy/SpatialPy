@@ -5,17 +5,17 @@ Copyright 2018 Brian Drawert (UNCA)
 This program is distributed under the terms of the GNU GENERAL PUBLIC LICENSE Version 3.
 See the file LICENSE.txt for details.
 ***************************************************************************************** */
-#include "read_lammps_input_file.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "read_lammps_input_file.h"
 
 
-void read_lammps_input_file(const char*filename, system_t*system){
+void read_lammps_input_file(const char*filename, ParticleSystem*system){
     char* s;
     FILE* fp = fopen(filename, "r");
     if(fp == NULL){
-        perror("Error opening input file");   
+        perror("Error opening input file");
         exit(EXIT_FAILURE);
     }
     char buffer[1024];
@@ -45,11 +45,11 @@ void read_lammps_input_file(const char*filename, system_t*system){
     printf("r=%i zlow=%f zhi=%f\n",r,zlow,zhigh);
 
     system->xlo = xlow;
-    system->xhi = xhigh; 
+    system->xhi = xhigh;
     system->ylo = ylow;
-    system->yhi = yhigh; 
+    system->yhi = yhigh;
     system->zlo = zlow;
-    system->zhi = zhigh; 
+    system->zhi = zhigh;
 
     s=fgets(buffer,1024,fp);
     s=fgets(buffer,1024,fp);
@@ -71,7 +71,7 @@ void read_lammps_input_file(const char*filename, system_t*system){
     s=fgets(buffer,1024,fp);
     int id,type,is_solid;
     double rho,x,y,z;
-    particle_t*me;
+    Particle*me;
     for(i=0;i<natoms;i++){
         s=fgets(buffer,1024,fp);
         r = sscanf(buffer, "%d 0 %d %lf %lf %lf %lf %d",&id,&type,&rho,&x,&y,&z,&is_solid);
@@ -89,6 +89,4 @@ void read_lammps_input_file(const char*filename, system_t*system){
         printf("atom %i at %lf,%lf,%lf\n",id,x,y,z);
     }
 
-
 }
-

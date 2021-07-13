@@ -27,7 +27,7 @@ class PlaceInitialCondition(InitialCondition):
         spec_name = self.species.name
         for spec_ndx, spec_name in enumerate(model.listOfSpecies.keys()):
             if model.listOfSpecies[spec_name] == self.species: break
-        vtx = model.mesh.closest_vertex(self.location)
+        vtx = model.domain.closest_vertex(self.location)
         model.u0[spec_ndx, vtx] += self.count
 
 class UniformInitialCondition(InitialCondition):
@@ -46,12 +46,12 @@ class UniformInitialCondition(InitialCondition):
             if model.listOfSpecies[spec_name] == self.species: break
 
         if self.types is None:
-            nvox = model.mesh.get_num_voxels()
+            nvox = model.domain.get_num_voxels()
             for vtx in range(nvox):
                 model.u0[spec_ndx, vtx] += self.count
         else:
-            for i in range(model.mesh.get_num_voxels()):
-                if model.mesh.type[i] in self.types:
+            for i in range(model.domain.get_num_voxels()):
+                if model.domain.type[i] in self.types:
                     model.u0[spec_ndx, i] += self.count
 
 
@@ -74,14 +74,14 @@ class ScatterInitialCondition(InitialCondition):
             if model.listOfSpecies[spec_name] == self.species: break
 
         if self.types is None:
-            nvox = model.mesh.get_num_voxels()
+            nvox = model.domain.get_num_voxels()
             for mol in range(self.count):
                 vtx = numpy.random.randint(0, nvox)
                 model.u0[spec_ndx, vtx] += 1
         else:
             allowed_voxels = []
-            for i in range(model.mesh.get_num_voxels()):
-                if model.mesh.type[i] in self.types:
+            for i in range(model.domain.get_num_voxels()):
+                if model.domain.type[i] in self.types:
                     allowed_voxels.append(i)
             nvox = len(allowed_voxels)
             if nvox==0: raise ModelError("ScatterInitialCondition has zero voxels to scatter in. Species={0} count={1} types={2}".format(self.species.name, self.count, self.types))

@@ -6,9 +6,9 @@ class VTKReader:
     """VTKReader.py: SpatialPy minimal VTK legacy file reader."""
     """Reference: https://vtk.org/wp-content/uploads/2015/04/file-formats.pdf"""
 
-    def __init__(self, debug=False):
+    def __init__(self, filename=None, debug=False):
 
-        self.filename = None
+        self.filename = filename
         self.pointdatatype = None
         self.numpoints = None
         self.points = None

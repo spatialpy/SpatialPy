@@ -35,7 +35,7 @@ class cylinderDemo3D(spatialpy.Model):
         # Define Geometry
         # Make sure that we have the correct path to the mesh file even if we are not executing from the basedir.
         basedir = os.path.dirname(os.path.abspath(__file__))
-        self.mesh = spatialpy.Mesh.read_xml_mesh(basedir+'cylinder.xml')
+        self.domain = spatialpy.Domain.read_xml_mesh(basedir+'cylinder.xml')
 
         # Define Types
         self.set_type(Middle(), 1)
@@ -46,8 +46,8 @@ class cylinderDemo3D(spatialpy.Model):
         self.restrict(A,[1,2])
         self.restrict(B,[1,3])
 
-        vol = self.mesh.get_vol()
-        type_id = self.mesh.type
+        vol = self.domain.get_vol()
+        type_id = self.domain.type
         left = numpy.sum(vol[type_id == 2])
         right = numpy.sum(vol[type_id == 3])
         print("left "+str(left)+" right "+str(right))

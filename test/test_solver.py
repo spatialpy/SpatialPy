@@ -14,7 +14,7 @@ class diffusion_debug(spatialpy.Model):
         A = spatialpy.Species(name="A", diffusion_constant=diffusion_constant)
         self.add_species([A])
 
-        self.mesh = spatialpy.Mesh.create_2D_domain(
+        self.domain = spatialpy.Domain.create_2D_domain(
             xlim=[-1, 1], ylim=[-1, 1], nx=50, ny=50, type_id=1.0,
             mass=1.0, nu=1.0, fixed=True,  rho0=1.0, c0=1.0, P0=1.0
         )
@@ -30,7 +30,7 @@ class diffusion_debug(spatialpy.Model):
 #     def __init__(self, model_name="test1D"):
 #         spatialpy.Model.__init__(self, model_name)
 #         X = self.add_species(spatialpy.Species(name="X",  diffusion_constant=0.001))
-#         self.mesh = spatialpy.Mesh.generate_unit_interval_mesh(nx=100, periodic=True)
+#         self.domain = spatialpy.Domain.generate_unit_interval_mesh(nx=100, periodic=True)
 #         self.add_initial_condition(spatialpy.PlaceInitialCondition(X, 1000))
 #         #self.set_initial_condition_place_near({X:1000}, 0.1)
 #         self.timespan(range(10))
@@ -84,8 +84,8 @@ class TestSolverFunctionality(unittest.TestCase):
         self.assertFalse(result1 == result2)
 
     def test_mesh_pickle(self):
-        meshstr = pickle.dumps(self.model.mesh)
-        mesh = pickle.loads(meshstr)
+        meshstr = pickle.dumps(self.model.domain)
+        domain = pickle.loads(meshstr)
 
     def test_model_pickle(self):
         """ Test that the model is picklable. We do not compare models directly, but rather the results after simulation. """
@@ -129,7 +129,7 @@ class TestSolverFunctionality(unittest.TestCase):
     #     model2 = pickle.loads(model_str)
     #     self.periodic_model.assemble()
     #     model2.assemble()
-    #     self.assertEqual(self.periodic_model.mesh.get_num_dof_voxels(), model2.mesh.get_num_dof_voxels())
+    #     self.assertEqual(self.periodic_model.domain.get_num_dof_voxels(), model2.domain.get_num_dof_voxels())
 
 
 if __name__ == '__main__':

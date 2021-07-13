@@ -1,0 +1,118 @@
+#-----------------------------------------------------------------------------
+# Makefile for ANN library
+#----------------------------------------------------------------------
+# Copyright (c) 1997-2005 University of Maryland and Sunil Arya and
+# David Mount.  All Rights Reserved.
+# 
+# This software and related documentation is part of the Approximate
+# Nearest Neighbor Library (ANN).  This software is provided under
+# the provisions of the Lesser GNU Public License (LGPL).  See the
+# file ../ReadMe.txt for further information.
+# 
+# The University of Maryland (U.M.) and the authors make no
+# representations about the suitability or fitness of this software for
+# any purpose.  It is provided "as is" without express or implied
+# warranty.
+#----------------------------------------------------------------------
+# History:
+#	Revision 0.1  03/04/98
+#		Initial release
+#	Revision 1.0  04/01/05
+#		Renamed files from .cc to .cpp for Microsoft Visual C++
+#		Added kd_dump.cpp
+#	Revision 1.1  05/03/05
+#		Added kd_fix_rad_search.cpp and bd_fix_rad_search.cpp
+#----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# Some basic definitions:
+#		BASEDIR		where include, src, lib, ... are
+#		INCLIB		include directory
+#		LIBLIB		library directory
+#-----------------------------------------------------------------------------
+BASEDIR	= ..
+C++ = g++
+CFLAGS = -c -std=c++14 -Wall -O3 -g
+INCDIR = $(ROOTINC)/external/ANN/include/
+LIBDIR	= $(BASEDIR)/lib
+
+SOURCES = ANN.cpp brute.cpp kd_tree.cpp kd_util.cpp kd_split.cpp \
+	kd_dump.cpp kd_search.cpp kd_pr_search.cpp kd_fix_rad_search.cpp \
+	bd_tree.cpp bd_search.cpp bd_pr_search.cpp bd_fix_rad_search.cpp \
+	perf.cpp
+
+HEADERS = kd_tree.h kd_split.h kd_util.h kd_search.h \
+	kd_pr_search.h kd_fix_rad_search.h perf.h pr_queue.h pr_queue_k.h
+
+OBJECTS = $(SOURCES:.cpp=.o)
+
+#-----------------------------------------------------------------------------
+# Make the library
+#-----------------------------------------------------------------------------
+
+default: spatialpy
+
+targets: $(LIBDIR)/$(ANNLIB)
+
+spatialpy: $(OBJECTS)
+
+$(LIBDIR)/$(ANNLIB): $(OBJECTS)
+	$(MAKELIB) $(ANNLIB) $(OBJECTS)
+	$(RANLIB) $(ANNLIB)
+	mv $(ANNLIB) $(LIBDIR)
+
+#-----------------------------------------------------------------------------
+# Make object files
+#-----------------------------------------------------------------------------
+
+ANN.o: $(ROOTINC)/external/ANN/src/ANN.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/ANN.cpp
+
+brute.o: $(ROOTINC)/external/ANN/src/brute.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/brute.cpp
+
+kd_tree.o: $(ROOTINC)/external/ANN/src/kd_tree.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/kd_tree.cpp
+
+kd_util.o: $(ROOTINC)/external/ANN/src/kd_util.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/kd_util.cpp
+
+kd_split.o: $(ROOTINC)/external/ANN/src/kd_split.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/kd_split.cpp
+
+kd_search.o: $(ROOTINC)/external/ANN/src/kd_search.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/kd_search.cpp
+
+kd_pr_search.o: $(ROOTINC)/external/ANN/src/kd_pr_search.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/kd_pr_search.cpp
+
+kd_fix_rad_search.o: $(ROOTINC)/external/ANN/src/kd_fix_rad_search.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/kd_fix_rad_search.cpp
+
+kd_dump.o: $(ROOTINC)/external/ANN/src/kd_dump.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/kd_dump.cpp
+
+bd_tree.o: $(ROOTINC)/external/ANN/src/bd_tree.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/bd_tree.cpp
+
+bd_search.o: $(ROOTINC)/external/ANN/src/bd_search.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/bd_search.cpp
+
+bd_pr_search.o: $(ROOTINC)/external/ANN/src/bd_pr_search.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/bd_pr_search.cpp
+
+bd_fix_rad_search.o: $(ROOTINC)/external/ANN/src/bd_fix_rad_search.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/bd_fix_rad_search.cpp
+
+perf.o: $(ROOTINC)/external/ANN/src/perf.cpp
+	$(C++) -c -I$(INCDIR) $(CFLAGS) $(ROOTINC)/external/ANN/src/perf.cpp
+
+#-----------------------------------------------------------------------------
+# Cleaning
+#-----------------------------------------------------------------------------
+
+clean:
+	-rm -f *.o core
+
+realclean: clean
+

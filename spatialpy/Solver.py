@@ -4,6 +4,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import re
 
@@ -11,9 +12,24 @@ import re
 from spatialpy.Model import *
 from spatialpy.Result import *
 
+def read_from_stdout(stdout,verbose=True):
+    ''' Used with subprocess.Popen and threading to capture all output and print
+        to the screen notebook without waiting or storing the output ina buffer.'''
+    try:
+        while True:
+            line = stdout.readline()
+            if line != b'':
+                if verbose:
+                    print(line.decode(),end='')
+            else:
+                #got empty line, ending
+                return
+    except Exception as e:
+        print("read_from_stdout(): {0}".format(e))
+
 
 class Solver:
-    """ spatialpy solvers. """
+    """ SpatialPy solver object."""
 
     def __init__(self, model, debug_level=0):
         """ Constructor. """
@@ -79,7 +95,10 @@ class Solver:
 
         # Build the solver
         makefile = self.SpatialPy_ROOTDIR+'/build/Makefile'
-        cmd_list = ['cd', self.build_dir, '&&', 'make', '-f', makefile, 'ROOT="' + self.SpatialPy_ROOTPARAM+'"', 'ROOTINC="' + self.SpatialPy_ROOTINC+'"','MODEL=' + self.prop_file_name, 'BUILD='+self.build_dir]
+        cmd_list = ['cd', self.build_dir, '&&', 'make', '-f', makefile,
+            'ROOT="' + self.SpatialPy_ROOTPARAM+'"',
+            'ROOTINC="' + self.SpatialPy_ROOTINC+'"',
+            'MODEL=' + self.prop_file_name, 'BUILD='+self.build_dir]
         if profile:
           cmd_list.append('GPROFFLAG=-pg')
         if profile or debug:
@@ -88,40 +107,41 @@ class Solver:
         if self.debug_level > 1:
             print("cmd: {0}\n".format(cmd))
         try:
-            handle = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            handle = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, shell=True)
+            stdout, _ = handle.communicate()
             return_code = handle.wait()
+            if return_code != 0:
+                try:
+                    print(stdout.decode("utf-8"))
+                except Exception as e:
+                    pass
+                raise SimulationError(
+                    "Compilation of solver failed, return_code={0}".format(
+                        return_code))
+
+            if self.debug_level > 1:
+                print(stdout.decode("utf-8"))
+
         except OSError as e:
-            print(
-                "Error, execution of compilation raised an exception: {0}".format(e))
+            print("Error, execution of compilation raised an exception: {0}".format(
+                e))
             print("cmd = {0}".format(cmd))
             raise SimulationError("Compilation of solver failed")
-
-        if return_code != 0:
-            try:
-                print("Reading stdout/stderr from process:")
-                print(handle.stdout.read().decode("utf-8"))
-                print(handle.stderr.read().decode("utf-8"))
-            except Exception as e:
-                pass
-            raise SimulationError(
-                "Compilation of solver failed, return_code={0}".format(return_code))
-
-        if self.debug_level > 1:
-            print(handle.stdout.read().decode("utf-8"))
-            print(handle.stderr.read().decode("utf-8"))
 
         self.is_compiled = True
 
 
-    def run(self, number_of_trajectories=1, seed=None, timeout=None, number_of_threads=None, debug=False, profile=False):
+    def run(self, number_of_trajectories=1, seed=None, timeout=None,
+                number_of_threads=None, debug=False, profile=False, verbose=True):
         """ Run one simulation of the model.
         Args:
             number_of_trajectories: (int) How many trajectories should be simulated.
             seed: (int) the random number seed (incremented by one for multiple runs).
             timeout: (int) maximum number of seconds the solver can run.
             number_of_threads: (int) the number threads the solver will use.
-            debug: (bool) start a gdbgui debugger (also compiles with debug symbols if compilation hasn't happened)
+            debug: (bool) start a gdbgui debugger (also compiles with debug symbols
+                if compilation hasn't happened)
             profile: (bool) output gprof profiling data if available
         Returns:
             Result object.
@@ -150,73 +170,43 @@ class Solver:
 
             if self.debug_level > 1:
                 print('cmd: {0}\n'.format(solver_cmd))
-            stdout = ''
-            stderr = ''
-#            try:
-#                if self.debug_level >= 1:  #stderr & stdout to the terminal
-#                    handle = subprocess.Popen(solver_cmd, shell=True)
-#                else:
-#                    handle = subprocess.Popen(solver_cmd, stderr=subprocess.PIPE,
-#                                              stdout=subprocess.PIPE, shell=True)
-#                    stdout, stderr = handle.communicate()
-#                return_code = handle.wait()
-#            except OSError as e:
-#                print("Error, execution of solver raised an exception: {0}".format(e))
-#                print("cmd = {0}".format(solver_cmd))
+
+            start = time.monotonic()
+            return_code = None
             try:
-                start = time.monotonic()
-                return_code = None
-                with subprocess.Popen(solver_cmd, shell=True, stdout=subprocess.PIPE, start_new_session=True) as process:
+                with subprocess.Popen(solver_cmd, shell=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                        start_new_session=True) as process:
                     try:
+                        # start thread to read process stdout to stdout
+                        t = threading.Thread(target=read_from_stdout,
+                            args=(process.stdout,verbose,))
+                        t.start()
                         if timeout is not None:
-                            stdout, stderr = process.communicate(
-                                timeout=timeout)
+                            return_code = process.wait(timeout=timeout)
                         else:
-                            stdout, stderr = process.communicate()
-                        return_code = process.wait()
-                        if self.debug_level >= 1:  # stderr & stdout to the terminal
-                            print('Elapsed seconds: {:.2f}'.format(
-                                time.monotonic() - start))
-                            if stdout is not None:
-                                print(stdout.decode('utf-8'))
-                            if stderr is not None:
-                                print(stderr.decode('utf-8'))
+                            return_code = process.wait()
+                        t.join()
                     except KeyboardInterrupt:
+                        # send signal to the process group
+                        os.killpg(process.pid, signal.SIGINT)
                         print('Terminated by user after seconds: {:.2f}'.format(
                             time.monotonic() - start))
-                        os.killpg(process.pid, signal.SIGINT)
-                        #return_code = process.wait()
-                        stdout, stderr = process.communicate()
-                        if self.debug_level >= 1:  # stderr & stdout to the terminal
-                            print('Elapsed seconds: {:.2f}'.format(
-                                time.monotonic() - start))
-                            if stdout is not None:
-                                print(stdout.decode('utf-8'))
-                            if stderr is not None:
-                                print(stderr.decode('utf-8'))
                     except subprocess.TimeoutExpired:
                         result.timeout = True
                         # send signal to the process group
                         os.killpg(process.pid, signal.SIGINT)
-                        stdout, stderr = process.communicate()
-                        message = "SpatialPy solver timeout exceded. "
-                        if stdout is not None:
-                            message += stdout.decode('utf-8')
-                        if stderr is not None:
-                            message += stderr.decode('utf-8')
-                        #raise SimulationTimeout(message)
+                        raise SimulationTimeout("SpatialPy solver timeout exceded.")
             except OSError as e:
-                print(
-                    "Error, execution of solver raised an exception: {0}".format(e))
+                print("Error, execution of solver raised an exception: {0}".format(
+                    e))
                 print("cmd = {0}".format(solver_cmd))
 
+            if self.debug_level >= 1:  # output time
+                print('Elapsed seconds: {:.2f}'.format(
+                    time.monotonic() - start))
+
             if return_code is not None and return_code != 0:
-                if self.debug_level >= 1:
-                    try:
-                        print(stderr)
-                        print(stdout)
-                    except Exception as e:
-                        pass
                 print("solver_cmd = {0}".format(solver_cmd))
                 raise SimulationError(
                     "Solver execution failed, return code = {0}".format(return_code))
@@ -224,10 +214,6 @@ class Solver:
             result.success = True
             if profile:
                 self.read_profile_info(result)
-            if stdout is not None:
-                result.stdout = stdout.decode('utf-8')
-            if stderr is not None:
-                result.stderr = stderr.decode('utf-8')
             if number_of_trajectories > 1:
                 result_list.append(result)
             else:
@@ -267,7 +253,7 @@ class Solver:
 
 
         template = open(os.path.abspath(os.path.dirname(
-            __file__)) + '/ssa_sdpd-c-simulation-engine/propensity_file_template.c', 'r')
+            __file__)) + '/ssa_sdpd-c-simulation-engine/propensity_file_template.cpp', 'r')
         propfile = open(file_name, "w")
         propfilestr = template.read()
 
@@ -284,7 +270,7 @@ class Solver:
         propfilestr = propfilestr.replace(
             "__NUMBER_OF_SPECIES__", str(self.model.get_num_species()))
         propfilestr = propfilestr.replace(
-            "__NUMBER_OF_VOXELS__", str(self.model.mesh.get_num_voxels()))
+            "__NUMBER_OF_VOXELS__", str(self.model.domain.get_num_voxels()))
 
         # Make sure all paramters are evaluated to scalars before we write them to the file.
         self.model.resolve_parameters()
@@ -382,16 +368,16 @@ class Solver:
         # End of pyurdme replacements
         # SSA-SDPD values here
         init_particles = ""
-        if self.model.mesh.type is None:
-            self.model.mesh.type = numpy.ones(self.model.mesh.get_num_voxels())
-        for i in range(len(self.model.mesh.type)):
-            if self.model.mesh.type[i] == 0:
+        if self.model.domain.type is None:
+            self.model.domain.type = numpy.ones(self.model.domain.get_num_voxels())
+        for i in range(len(self.model.domain.type)):
+            if self.model.domain.type[i] == 0:
                 raise SimulationError(
                     "Not all particles have been defined in a type. Mass and other properties must be defined")
             init_particles += "init_create_particle(sys,id++,{0},{1},{2},{3},{4},{5},{6},{7},{8});".format(
-                self.model.mesh.coordinates()[i,0],self.model.mesh.coordinates()[i,1],self.model.mesh.coordinates()[i,2],
-                self.model.mesh.type[i],self.model.mesh.nu[i],self.model.mesh.mass[i],
-                (self.model.mesh.mass[i] / self.model.mesh.vol[i]),int(self.model.mesh.fixed[i]),num_chem_species )+"\n"
+                self.model.domain.coordinates()[i,0],self.model.domain.coordinates()[i,1],self.model.domain.coordinates()[i,2],
+                self.model.domain.type[i],self.model.domain.nu[i],self.model.domain.mass[i],
+                (self.model.domain.mass[i] / self.model.domain.vol[i]),int(self.model.domain.fixed[i]),num_chem_species )+"\n"
         propfilestr = propfilestr.replace("__INIT_PARTICLES__", init_particles)
 
         # process initial conditions here
@@ -431,7 +417,7 @@ class Solver:
                     for j in range(Nd.shape[1]):
                         if j+i > 0:
                             outstr += ','
-                        outstr += "{0}".format(Nd[i, j])
+                        outstr += "{0}".format(int(Nd[i, j]))
                 outstr += "};\n"
                 outstr += "static size_t input_irN[{0}] = ".format(len(N.indices))
                 outstr += "{"
@@ -454,7 +440,7 @@ class Solver:
                 for i in range(len((N.data))):
                     if i > 0:
                         outstr += ','
-                    outstr += str(N.data[i])
+                    outstr += str(int(N.data[i]))
                 outstr += "};"
                 input_constants += outstr + "\n"
             else:
@@ -517,7 +503,7 @@ class Solver:
             "__INPUT_CONSTANTS__", input_constants)
 
         system_config = "debug_flag = {0};\n".format(self.debug_level)
-        system_config += "system_t* system = create_system({0},{1},{2},{3},{4},{5});\n".format(
+        system_config += "ParticleSystem *system = new ParticleSystem({0},{1},{2},{3},{4},{5});\n".format(
             num_types, num_chem_species, num_chem_rxns, 
             num_stoch_species, num_stoch_rxns, num_data_fn
             )
@@ -533,24 +519,24 @@ class Solver:
         system_config += "system->nt = {0};\n".format(self.model.num_timesteps)
         system_config += "system->output_freq = {0};\n".format(self.model.output_freq)
         if self.h is None:
-            self.h = self.model.mesh.find_h()
+            self.h = self.model.domain.find_h()
         if self.h == 0.0:
             raise ModelError('h (basis function width) can not be zero.')
         system_config +="system->h = {0};\n".format(self.h)
-        system_config +="system->rho0 = {0};\n".format(self.model.mesh.rho0)
-        system_config +="system->c0 = {0};\n".format(self.model.mesh.c0)
-        system_config +="system->P0 = {0};\n".format(self.model.mesh.P0)
+        system_config +="system->rho0 = {0};\n".format(self.model.domain.rho0)
+        system_config +="system->c0 = {0};\n".format(self.model.domain.c0)
+        system_config +="system->P0 = {0};\n".format(self.model.domain.P0)
         #// bounding box
-        system_config += "system->xlo = {0};\n".format(self.model.mesh.xlim[0])
-        system_config += "system->xhi = {0};\n".format(self.model.mesh.xlim[1])
-        system_config += "system->ylo = {0};\n".format(self.model.mesh.ylim[0])
-        system_config += "system->yhi = {0};\n".format(self.model.mesh.ylim[1])
-        system_config += "system->zlo = {0};\n".format(self.model.mesh.zlim[0])
-        system_config += "system->zhi = {0};\n".format(self.model.mesh.zlim[1])
+        system_config += "system->xlo = {0};\n".format(self.model.domain.xlim[0])
+        system_config += "system->xhi = {0};\n".format(self.model.domain.xlim[1])
+        system_config += "system->ylo = {0};\n".format(self.model.domain.ylim[0])
+        system_config += "system->yhi = {0};\n".format(self.model.domain.ylim[1])
+        system_config += "system->zlo = {0};\n".format(self.model.domain.zlim[0])
+        system_config += "system->zhi = {0};\n".format(self.model.domain.zlim[1])
         #
-        if self.model.mesh.gravity is not None:
+        if self.model.domain.gravity is not None:
             for i in range(3):
-                system_config += "system->gravity[{0}] = {1};\n".format(i,self.model.mesh.gravity[i])
+                system_config += "system->gravity[{0}] = {1};\n".format(i,self.model.domain.gravity[i])
 
 
         propfilestr = propfilestr.replace("__SYSTEM_CONFIG__", system_config)

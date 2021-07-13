@@ -2,6 +2,7 @@ version: "3.1"
 
 services:
   notebook:
+    command: /bin/bash
     build:
       context: .
       dockerfile: Dockerfile

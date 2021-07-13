@@ -7,18 +7,18 @@ See the file LICENSE.txt for details.
 ***************************************************************************************** */
 #ifndef model_h
 #define model_h
-#include "linked_list.h"
-#include "particle.h"
 
+#include "particle.hpp"
+#include "particle_system.hpp"
 
+namespace Spatialpy{
+    void filterDensity(Particle* me, ParticleSystem* system);
 
-void filterDensity(particle_t* me, system_t* system);
+    void pairwiseForce(Particle* me, ParticleSystem* system);
 
-void pairwiseForce(particle_t* me, system_t* system);
+    void computeBoundaryVolumeFraction(Particle* me, ParticleSystem* system);
 
-void computeBoundaryVolumeFraction(particle_t* me, system_t* system);
-
-void applyBoundaryVolumeFraction(particle_t* me, system_t* system);
-
+    void applyBoundaryVolumeFraction(Particle* me, ParticleSystem* system);
+}
 
 #endif //model_h
